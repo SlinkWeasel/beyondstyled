@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BeyondStyled — Your AI Stylist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #F7F3EE; --warm-white: #FDFAF7; --taupe: #C4B5A5;
+      --stone: #8C7B6B; --charcoal: #2C2420; --blush: #E8D5C4;
+      --accent: #B8956A; --light-taupe: #EDE4DA;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--warm-white); color: var(--charcoal); font-family: 'DM Sans', sans-serif; font-weight: 300; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); transition: width 0.3s ease, height 0.3s ease; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid var(--taupe); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); transition: width 0.3s ease, height 0.3s ease; }
+    .cursor.hovering { width: 14px; height: 14px; }
+    .cursor-ring.hovering { width: 48px; height: 48px; border-color: var(--accent); opacity: 0.5; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 28px 48px; mix-blend-mode: multiply; }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; color: var(--charcoal); text-decoration: none; }
+    .nav-tag { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); }
+    .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; }
+    .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 64px 80px 64px; position: relative; z-index: 2; }
+    .hero-eyebrow { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 32px; opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards; }
+    .hero-headline { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.5rem, 5vw, 5.5rem); font-weight: 300; line-height: 1.05; color: var(--charcoal); margin-bottom: 32px; opacity: 0; animation: fadeUp 0.8s ease 0.4s forwards; }
+    .hero-headline em { font-style: italic; color: var(--accent); }
+    .hero-sub { font-size: 1rem; line-height: 1.7; color: var(--stone); max-width: 380px; margin-bottom: 56px; opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards; }
+    .waitlist-form { display: flex; flex-direction: column; gap: 12px; max-width: 380px; opacity: 0; animation: fadeUp 0.8s ease 0.8s forwards; }
+    .input-row { display: flex; border: 1px solid var(--taupe); background: white; overflow: hidden; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+    .input-row:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,149,106,0.1); }
+    .waitlist-input { flex: 1; padding: 16px 20px; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300; color: var(--charcoal); background: transparent; cursor: none; }
+    .waitlist-input::placeholder { color: var(--taupe); }
+    .waitlist-btn { padding: 16px 24px; background: var(--charcoal); color: var(--cream); border: none; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: none; transition: background 0.3s ease; white-space: nowrap; }
+    .waitlist-btn:hover { background: var(--accent); }
+    .form-note { font-size: 0.72rem; color: var(--taupe); letter-spacing: 0.05em; }
+    .success-msg { display: none; align-items: center; gap: 12px; padding: 16px 20px; background: var(--light-taupe); border-left: 3px solid var(--accent); }
+    .success-msg.visible { display: flex; }
+    .success-msg span { font-size: 0.85rem; color: var(--charcoal); }
+    .hero-right { position: relative; background: var(--light-taupe); overflow: hidden; }
+    .hero-right::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 20%, rgba(184,149,106,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(196,181,165,0.2) 0%, transparent 50%); }
+    .outfit-grid { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 2px; opacity: 0; animation: fadeIn 1.2s ease 1s forwards; }
+    .outfit-card { background: var(--cream); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; position: relative; overflow: hidden; transition: transform 0.4s ease; }
+    .outfit-card:hover { transform: scale(1.02); z-index: 2; }
+    .outfit-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 60%); pointer-events: none; }
+    .outfit-icon { font-size: 2.5rem; line-height: 1; }
+    .outfit-label { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); }
+    .outfit-day { font-family: 'Cormorant Garamond', serif; font-size: 0.8rem; font-style: italic; color: var(--accent); }
+    .outfit-card.featured { grid-row: span 2; background: var(--charcoal); }
+    .outfit-card.featured .outfit-icon { font-size: 3.5rem; }
+    .outfit-card.featured .outfit-label { color: var(--taupe); }
+    .outfit-card.featured .outfit-day { color: var(--blush); }
+    .ai-badge { position: absolute; bottom: 12px; right: 12px; background: var(--accent); color: white; font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 8px; }
+    .floating-stat { position: absolute; top: 40px; right: -20px; background: white; padding: 16px 20px; box-shadow: 0 8px 40px rgba(44,36,32,0.12); z-index: 10; opacity: 0; animation: slideLeft 0.8s ease 1.4s forwards; }
+    .stat-number { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--charcoal); line-height: 1; }
+    .stat-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); margin-top: 4px; }
+    .how { padding: 120px 64px; background: var(--cream); position: relative; overflow: hidden; }
+    .how::before { content: 'HOW'; position: absolute; top: -20px; left: -10px; font-family: 'Cormorant Garamond', serif; font-size: 20vw; color: rgba(196,181,165,0.12); line-height: 1; pointer-events: none; user-select: none; }
+    .section-label { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 4vw, 4rem); font-weight: 300; line-height: 1.1; color: var(--charcoal); margin-bottom: 64px; max-width: 600px; }
+    .section-title em { font-style: italic; color: var(--accent); }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; position: relative; z-index: 1; }
+    .step-num { font-family: 'Cormorant Garamond', serif; font-size: 4rem; font-weight: 300; color: var(--light-taupe); line-height: 1; margin-bottom: 20px; }
+    .step-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 400; color: var(--charcoal); margin-bottom: 12px; }
+    .step-desc { font-size: 0.88rem; line-height: 1.7; color: var(--stone); }
+    .step-divider { width: 32px; height: 1px; background: var(--accent); margin-bottom: 20px; }
+    .cta-section { padding: 120px 64px; background: var(--charcoal); display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; position: relative; overflow: hidden; }
+    .cta-section::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(184,149,106,0.15) 0%, transparent 70%); pointer-events: none; }
+    .cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 4vw, 4.5rem); font-weight: 300; line-height: 1.1; color: var(--cream); }
+    .cta-title em { font-style: italic; color: var(--blush); }
+    .cta-right { position: relative; z-index: 1; }
+    .cta-sub { font-size: 0.95rem; line-height: 1.7; color: var(--taupe); margin-bottom: 40px; }
+    .cta-form { display: flex; flex-direction: column; gap: 12px; }
+    .cta-input-row { display: flex; border: 1px solid rgba(196,181,165,0.3); overflow: hidden; transition: border-color 0.3s ease; }
+    .cta-input-row:focus-within { border-color: var(--accent); }
+    .cta-input { flex: 1; padding: 16px 20px; background: rgba(255,255,255,0.05); border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300; color: var(--cream); cursor: none; }
+    .cta-input::placeholder { color: rgba(196,181,165,0.5); }
+    .cta-btn { padding: 16px 24px; background: var(--accent); color: white; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: none; transition: background 0.3s ease; white-space: nowrap; }
+    .cta-btn:hover { background: var(--blush); color: var(--charcoal); }
+    .cta-note { font-size: 0.72rem; color: rgba(196,181,165,0.6); letter-spacing: 0.05em; }
+    .ticker { background: var(--accent); padding: 12px 0; overflow: hidden; white-space: nowrap; }
+    .ticker-inner { display: inline-flex; animation: ticker 20s linear infinite; }
+    .ticker-item { font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: white; padding: 0 40px; }
+    .ticker-dot { color: rgba(255,255,255,0.5); }
+    footer { padding: 40px 64px; background: var(--charcoal); border-top: 1px solid rgba(196,181,165,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; color: var(--taupe); }
+    .footer-note { font-size: 0.72rem; letter-spacing: 0.1em; color: rgba(196,181,165,0.4); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; } body { cursor: auto; } .cursor, .cursor-ring { display: none; }
+      .hero { grid-template-columns: 1fr; min-height: auto; } .hero-left { padding: 100px 24px 60px; } .hero-right { height: 50vh; }
+      .floating-stat { display: none; } .how { padding: 80px 24px; } .steps { grid-template-columns: 1fr; gap: 40px; }
+      .cta-section { grid-template-columns: 1fr; padding: 80px 24px; gap: 40px; }
+      footer { flex-direction: column; gap: 12px; padding: 32px 24px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+  <nav>
+    <a href="#" class="nav-logo">BeyondStyled</a>
+    <span class="nav-tag">Coming Soon</span>
+  </nav>
+  <section class="hero">
+    <div class="hero-left">
+      <p class="hero-eyebrow">Introducing BeyondStyled</p>
+      <h1 class="hero-headline">AI picks<br>your outfits.<br><em>You just<br>get dressed.</em></h1>
+      <p class="hero-sub">Photograph your wardrobe once. Get a full week of perfectly planned outfits — from your actual clothes — every Sunday night.</p>
+      <div class="waitlist-form">
+        <div class="input-row">
+          <input type="email" class="waitlist-input" id="heroEmail" placeholder="your@email.com" autocomplete="off" />
+          <button class="waitlist-btn" onclick="submitWaitlist('heroEmail','heroSuccess')">Join Waitlist</button>
+        </div>
+        <div class="success-msg" id="heroSuccess"><span>&#10022; You're on the list. We'll be in touch.</span></div>
+        <p class="form-note">Free early access &middot; No credit card &middot; Unsubscribe anytime</p>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="outfit-grid">
+        <div class="outfit-card featured">
+          <div class="outfit-icon">&#129381;</div>
+          <div class="outfit-day">Monday</div>
+          <div class="outfit-label">AI Planned</div>
+          <div class="ai-badge">&#10022; AI</div>
+        </div>
+        <div class="outfit-card"><div class="outfit-icon">&#128535;</div><div class="outfit-day">Tuesday</div><div class="outfit-label">Office Ready</div></div>
+        <div class="outfit-card"><div class="outfit-icon">&#128534;</div><div class="outfit-day">Wednesday</div><div class="outfit-label">Casual</div></div>
+        <div class="outfit-card"><div class="outfit-icon">&#10024;</div><div class="outfit-day">Thursday</div><div class="outfit-label">Date Night</div></div>
+        <div class="outfit-card"><div class="outfit-icon">&#128671;</div><div class="outfit-day">Friday</div><div class="outfit-label">Weekend Ease</div></div>
+      </div>
+      <div class="floating-stat">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Outfits &middot; One Sunday</div>
+      </div>
+    </div>
+  </section>
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item">Your Wardrobe <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">AI Styled <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">Zero Decisions <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">Every Week <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">Your Wardrobe <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">AI Styled <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">Zero Decisions <span class="ticker-dot">&middot;</span></span>
+      <span class="ticker-item">Every Week <span class="ticker-dot">&middot;</span></span>
+    </div>
+  </div>
+  <section class="how">
+    <p class="section-label">How It Works</p>
+    <h2 class="section-title">Three steps to a<br><em>perfectly styled</em> week</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div><div class="step-divider"></div>
+        <div class="step-title">Photograph Your Closet</div>
+        <p class="step-desc">Take a photo of each item. Our AI categorizes everything — colour, style, occasion — and builds your personal wardrobe in minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div><div class="step-divider"></div>
+        <div class="step-title">Set Your Week</div>
+        <p class="step-desc">Tell us what's coming — work days, a dinner out, weekend plans. We factor in the weather automatically so you're always dressed right.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div><div class="step-divider"></div>
+        <div class="step-title">Get Dressed. Done.</div>
+        <p class="step-desc">Every Sunday, your AI stylist delivers a complete 7-day outfit plan — built from clothes you already own. Just open the app and follow the plan.</p>
+      </div>
+    </div>
+  </section>
+  <section class="cta-section">
+    <div class="cta-left">
+      <h2 class="cta-title">Stop staring<br>at your closet.<br><em>Start wearing it.</em></h2>
+    </div>
+    <div class="cta-right">
+      <p class="cta-sub">Join the waitlist for early access. First members get free access for the first 3 months.</p>
+      <div class="cta-form">
+        <div class="cta-input-row">
+          <input type="email" class="cta-input" id="ctaEmail" placeholder="your@email.com" autocomplete="off" />
+          <button class="cta-btn" onclick="submitWaitlist('ctaEmail','ctaSuccess')">Get Early Access</button>
+        </div>
+        <div class="success-msg" id="ctaSuccess" style="background:rgba(184,149,106,0.15);border-color:var(--accent);">
+          <span style="color:var(--cream);">&#10022; You're on the list. We'll be in touch.</span>
+        </div>
+        <p class="cta-note">Free early access &middot; No credit card &middot; Unsubscribe anytime</p>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <span class="footer-logo">BeyondStyled</span>
+    <span class="footer-note">&copy; 2026 BeyondStyled &middot; Your AI Stylist</span>
+  </footer>
+  <script>
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+    let mouseX=0,mouseY=0,ringX=0,ringY=0;
+    document.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;cursor.style.left=mouseX+'px';cursor.style.top=mouseY+'px';});
+    function animateCursor(){ringX+=(mouseX-ringX)*0.12;ringY+=(mouseY-ringY)*0.12;cursorRing.style.left=ringX+'px';cursorRing.style.top=ringY+'px';requestAnimationFrame(animateCursor);}
+    animateCursor();
+    document.querySelectorAll('button,a,input').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cursor.classList.add('hovering');cursorRing.classList.add('hovering');});
+      el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovering');cursorRing.classList.remove('hovering');});
+    });
+    function submitWaitlist(inputId,successId){
+      const input=document.getElementById(inputId);
+      const success=document.getElementById(successId);
+      const email=input.value.trim();
+      if(!email||!email.includes('@')){input.focus();return;}
+      input.closest('.input-row,.cta-input-row').style.display='none';
+      success.classList.add('visible');
+      // TODO: wire Formspree — fetch('https://formspree.io/f/YOUR_ID',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    }
+    document.getElementById('heroEmail').addEventListener('keydown',e=>{if(e.key==='Enter')submitWaitlist('heroEmail','heroSuccess');});
+    document.getElementById('ctaEmail').addEventListener('keydown',e=>{if(e.key==='Enter')submitWaitlist('ctaEmail','ctaSuccess');});
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});
+    document.querySelectorAll('.step').forEach((el,i)=>{el.style.opacity='0';el.style.transform='translateY(32px)';el.style.transition=`opacity 0.7s ease ${i*0.15}s,transform 0.7s ease ${i*0.15}s`;obs.observe(el);});
+  </script>
+</body>
+</html>
