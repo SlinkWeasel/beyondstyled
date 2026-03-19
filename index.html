@@ -207,14 +207,20 @@
       el.addEventListener('mouseenter',()=>{cursor.classList.add('hovering');cursorRing.classList.add('hovering');});
       el.addEventListener('mouseleave',()=>{cursor.classList.remove('hovering');cursorRing.classList.remove('hovering');});
     });
-    function submitWaitlist(inputId,successId){
+    async function submitWaitlist(inputId,successId){
       const input=document.getElementById(inputId);
       const success=document.getElementById(successId);
       const email=input.value.trim();
       if(!email||!email.includes('@')){input.focus();return;}
+      try {
+        await fetch('https://formspree.io/f/xzdjowqp',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Accept':'application/json'},
+          body:JSON.stringify({email})
+        });
+      } catch(e){ console.error('Formspree error',e); }
       input.closest('.input-row,.cta-input-row').style.display='none';
       success.classList.add('visible');
-      // TODO: wire Formspree — fetch('https://formspree.io/f/YOUR_ID',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
     }
     document.getElementById('heroEmail').addEventListener('keydown',e=>{if(e.key==='Enter')submitWaitlist('heroEmail','heroSuccess');});
     document.getElementById('ctaEmail').addEventListener('keydown',e=>{if(e.key==='Enter')submitWaitlist('ctaEmail','ctaSuccess');});
